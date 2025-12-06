@@ -1,0 +1,460 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Online Examination - Frontend (Single File)</title>
+  <style>
+    /* Simple, clean styles that work without external libs */
+    :root{--accent:#2563eb;--bg:#f6f8fb;--card:#ffffff}
+    body{font-family:Inter, system-ui, -apple-system,Segoe UI, Roboto, "Helvetica Neue", Arial; background:var(--bg);margin:0;padding:28px;color:#0f172a}
+    .container{max-width:980px;margin:0 auto}
+    .card{background:var(--card);box-shadow:0 6px 24px rgba(15,23,42,0.06);border-radius:12px;padding:20px}
+    header{display:flex;gap:16px;align-items:center;margin-bottom:18px}
+    h1{font-size:20px;margin:0}
+    .muted{color:#6b7280;font-size:13px}
+    .grid{display:grid;grid-template-columns:1fr 340px;gap:18px}
+    .form-row{margin-bottom:12px}
+    label{display:block;font-size:13px;margin-bottom:6px}
+    input[type=text],input[type=password],select,textarea{width:100%;padding:10px;border-radius:8px;border:1px solid #e6e9ef;font-size:14px}
+    button{background:var(--accent);color:white;padding:10px 14px;border-radius:8px;border:0;cursor:pointer}
+    button.ghost{background:transparent;color:var(--accent);border:1px solid rgba(37,99,235,0.15)}
+    .nav{display:flex;flex-direction:column;gap:8px}
+    .nav button{justify-content:flex-start}
+    .quiz-question{padding:12px;border-radius:10px;border:1px solid #eef2ff;margin-bottom:10px}
+    .options{display:flex;flex-direction:column;gap:8px}
+    .option{padding:10px;border-radius:8px;border:1px solid #e6eefc;cursor:pointer}
+    .option.selected{background:rgba(37,99,235,0.06);border-color:rgba(37,99,235,0.25)}
+    .timer{font-weight:700;color:#b91c1c}
+    .profile-list{display:flex;flex-direction:column;gap:6px}
+    .small{font-size:13px;color:#475569}
+    .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+    .hidden{display:none}
+    footer{margin-top:18px;color:#64748b;font-size:13px}
+    .right-card{position:sticky;top:28px}
+    .pill{display:inline-block;background:#eef2ff;color:var(--accent);padding:6px 10px;border-radius:999px;font-size:13px}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Online Examination</h1>
+      <div class="muted">Single-file frontend demo — saves progress in browser (localStorage)</div>
+    </header>
+
+    <div id="app" class="card">
+      <!-- Login View -->
+      <div id="loginView">
+        <h2>Login</h2>
+        <p class="muted">Use demo accounts: <strong>student1 / pass123</strong> or <strong>student2 / pass123</strong></p>
+        <div class="form-row">
+          <label for="loginUser">Username</label>
+          <input id="loginUser" type="text" />
+        </div>
+        <div class="form-row">
+          <label for="loginPass">Password</label>
+          <input id="loginPass" type="password" />
+        </div>
+        <div style="display:flex;gap:8px">
+          <button id="btnLogin">Login</button>
+          <button id="btnDemo" class="ghost">Auto-fill demo</button>
+        </div>
+      </div>
+
+      <!-- Main Dashboard (hidden initially) -->
+      <div id="dash" class="hidden">
+        <div class="topbar">
+          <div>
+            <div class="small">Logged in as <strong id="userDisplay"></strong></div>
+            <div class="muted">Session ID: <span id="sessionId" class="small"></span></div>
+          </div>
+          <div style="display:flex;gap:10px;align-items:center">
+            <div class="pill">Time left: <span id="timeLeft">00:00</span></div>
+            <button id="btnLogout" class="ghost">Logout</button>
+          </div>
+        </div>
+
+        <div class="grid">
+          <div>
+            <div style="display:flex;gap:10px;margin-bottom:10px;align-items:center">
+              <button id="startExam">Start Exam</button>
+              <button id="btnProfile" class="ghost">Profile / Change Password</button>
+              <button id="btnCloseSession" class="ghost">Close Session</button>
+              <span id="examStatus" class="muted" style="margin-left:8px">Not started</span>
+            </div>
+
+            <!-- Exam area -->
+            <div id="examArea" class="hidden card">
+              <h3>Exam: General Knowledge (Demo)</h3>
+              <div class="muted small">Total questions: <span id="totalQ">0</span></div>
+
+              <div id="questionsList"></div>
+
+              <div style="display:flex;gap:8px;margin-top:12px;align-items:center">
+                <button id="btnPrev" class="ghost">Previous</button>
+                <button id="btnNext" class="ghost">Next</button>
+                <button id="btnSubmit" style="margin-left:auto">Submit Exam</button>
+              </div>
+            </div>
+
+            <!-- Result area -->
+            <div id="resultArea" class="hidden card" style="margin-top:12px">
+              <h3>Result</h3>
+              <div id="scoreSummary"></div>
+              <button id="btnRetake" class="ghost">Retake Exam</button>
+            </div>
+
+            <!-- Profile area -->
+            <div id="profileArea" class="hidden card" style="margin-top:12px">
+              <h3>Profile</h3>
+              <div class="profile-list">
+                <div><label>Full name</label><input id="profileName" type="text"></div>
+                <div><label>Email</label><input id="profileEmail" type="text"></div>
+                <div><label>Change password</label><input id="profileNewPass" type="password" placeholder="leave blank to keep"></div>
+                <div style="display:flex;gap:8px;margin-top:8px">
+                  <button id="btnSaveProfile">Save</button>
+                  <button id="btnCancelProfile" class="ghost">Cancel</button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <aside class="right-card">
+            <div class="card">
+              <h4>Exam Info</h4>
+              <div class="muted small">Duration: <strong id="examDuration">10:00</strong> (MM:SS)</div>
+              <div class="muted small">Auto-submit when timer reaches 0</div>
+              <hr style="margin:10px 0">
+              <div class="muted small">Navigation</div>
+              <div id="navQ" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px"></div>
+            </div>
+          </aside>
+        </div>
+
+        <footer>
+          This is a frontend-only demonstration. Integrate with a backend (API) for production: secure authentication, exam retrieval, server-side submission and proctoring.
+        </footer>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    /******************************************************************
+     * Simple single-file Online Examination frontend
+     * - No backend required (demo uses localStorage and in-memory data)
+     * - Features: Login, update profile & password, selecting MCQ answers,
+     *   timer with auto-submit, close session, logout, save progress.
+     *
+     * Save this file as `online-exam-frontend.html` and open in browser.
+     ******************************************************************/
+
+    // Demo users (in production, validate with server)
+    const demoUsers = {
+      'student1': {password:'pass123', fullName:'Student One', email:'s1@example.com'},
+      'student2': {password:'pass123', fullName:'Student Two', email:'s2@example.com'}
+    }
+
+    // Demo questions (mcq) - add more or fetch from backend
+    const demoQuestions = [
+      {id:1, q:'What is the capital of France?', options:['Berlin','Madrid','Paris','Rome'], answer:2},
+      {id:2, q:'2 + 2 = ?', options:['3','4','5','6'], answer:1},
+      {id:3, q:'Which planet is known as the Red Planet?', options:['Earth','Mars','Venus','Jupiter'], answer:1},
+      {id:4, q:'Which language runs in a web browser?', options:['Python','Java','C','JavaScript'], answer:3},
+      {id:5, q:'HTML stands for?', options:['HyperTag','HyperText Markup Language','HomeText','HyperText Machine Lang'], answer:1}
+    ];
+
+    // DOM refs
+    const loginView = document.getElementById('loginView');
+    const dash = document.getElementById('dash');
+    const btnLogin = document.getElementById('btnLogin');
+    const btnDemo = document.getElementById('btnDemo');
+    const loginUser = document.getElementById('loginUser');
+    const loginPass = document.getElementById('loginPass');
+    const userDisplay = document.getElementById('userDisplay');
+    const sessionIdEl = document.getElementById('sessionId');
+    const btnLogout = document.getElementById('btnLogout');
+    const startExam = document.getElementById('startExam');
+    const examArea = document.getElementById('examArea');
+    const questionsList = document.getElementById('questionsList');
+    const totalQ = document.getElementById('totalQ');
+    const btnPrev = document.getElementById('btnPrev');
+    const btnNext = document.getElementById('btnNext');
+    const btnSubmit = document.getElementById('btnSubmit');
+    const timeLeftEl = document.getElementById('timeLeft');
+    const examStatus = document.getElementById('examStatus');
+    const navQ = document.getElementById('navQ');
+    const examDurationEl = document.getElementById('examDuration');
+    const resultArea = document.getElementById('resultArea');
+    const scoreSummary = document.getElementById('scoreSummary');
+    const btnRetake = document.getElementById('btnRetake');
+    const profileArea = document.getElementById('profileArea');
+    const btnProfile = document.getElementById('btnProfile');
+    const btnSaveProfile = document.getElementById('btnSaveProfile');
+    const btnCancelProfile = document.getElementById('btnCancelProfile');
+    const profileName = document.getElementById('profileName');
+    const profileEmail = document.getElementById('profileEmail');
+    const profileNewPass = document.getElementById('profileNewPass');
+    const btnCloseSession = document.getElementById('btnCloseSession');
+
+    // Exam settings (modifiable)
+    const EXAM_DURATION_SECONDS = 10 * 60; // default 10 minutes (demo: 10 minutes). You can change.
+
+    // State
+    let state = {
+      loggedIn: false,
+      username: null,
+      sessionId: null,
+      examStarted: false,
+      examStartTs: null,
+      duration: EXAM_DURATION_SECONDS,
+      remaining: EXAM_DURATION_SECONDS,
+      timerInterval: null,
+      questions: demoQuestions,
+      answers: {}, // {questionId: selectedIndex}
+      currentIndex: 0,
+      submitted: false
+    }
+
+    // Utilities
+    function saveToStorage(){
+      if(!state.username) return;
+      localStorage.setItem('exam_state_' + state.username, JSON.stringify({
+        examStarted: state.examStarted,
+        examStartTs: state.examStartTs,
+        duration: state.duration,
+        answers: state.answers,
+        currentIndex: state.currentIndex,
+        submitted: state.submitted
+      }))
+    }
+    function loadFromStorage(username){
+      const raw = localStorage.getItem('exam_state_' + username);
+      if(!raw) return null;
+      try{ return JSON.parse(raw);}catch(e){return null}
+    }
+
+    function formatTime(sec){
+      sec = Math.max(0, Math.floor(sec));
+      const m = Math.floor(sec/60).toString().padStart(2,'0');
+      const s = (sec%60).toString().padStart(2,'0');
+      return `${m}:${s}`;
+    }
+
+    function startTimer(){
+      if(state.timerInterval) clearInterval(state.timerInterval);
+      state.timerInterval = setInterval(()=>{
+        const elapsed = Math.floor((Date.now() - state.examStartTs)/1000);
+        state.remaining = Math.max(0, state.duration - elapsed);
+        timeLeftEl.textContent = formatTime(state.remaining);
+        if(state.remaining <= 0){
+          clearInterval(state.timerInterval);
+          autoSubmit();
+        }
+      }, 300);
+    }
+
+    function autoSubmit(){
+      if(state.submitted) return;
+      submitExam(true);
+    }
+
+    function renderNavButtons(){
+      navQ.innerHTML = '';
+      state.questions.forEach((q,i)=>{
+        const btn = document.createElement('button');
+        btn.textContent = i+1;
+        btn.className = state.answers[q.id] !== undefined ? '' : 'ghost';
+        btn.onclick = ()=>{ state.currentIndex = i; renderQuestion(); }
+        navQ.appendChild(btn);
+      })
+    }
+
+    function renderQuestion(){
+      const q = state.questions[state.currentIndex];
+      questionsList.innerHTML = '';
+      totalQ.textContent = state.questions.length;
+      const wrapper = document.createElement('div');
+      wrapper.className = 'quiz-question';
+      const qh = document.createElement('div');
+      qh.innerHTML = `<strong>Q${state.currentIndex+1}.</strong> ${q.q}`;
+      wrapper.appendChild(qh);
+      const opts = document.createElement('div');
+      opts.className = 'options';
+      q.options.forEach((opt, idx)=>{
+        const o = document.createElement('div');
+        o.className = 'option' + (state.answers[q.id]===idx ? ' selected' : '');
+        o.textContent = opt;
+        o.onclick = ()=>{
+          state.answers[q.id] = idx;
+          saveToStorage();
+          renderQuestion();
+          renderNavButtons();
+        }
+        opts.appendChild(o);
+      })
+      wrapper.appendChild(opts);
+      questionsList.appendChild(wrapper);
+      examStatus.textContent = state.submitted ? 'Submitted' : (state.examStarted ? 'In progress' : 'Not started');
+    }
+
+    function showView(){
+      loginView.classList.toggle('hidden', state.loggedIn);
+      dash.classList.toggle('hidden', !state.loggedIn);
+      if(state.loggedIn){
+        userDisplay.textContent = state.username;
+        sessionIdEl.textContent = state.sessionId;
+        if(state.examStarted && !state.submitted){
+          examArea.classList.remove('hidden');
+          renderQuestion();
+          renderNavButtons();
+          startTimer();
+        }
+      }
+    }
+
+    // Authentication (demo)
+    btnDemo.onclick = ()=>{ loginUser.value='student1'; loginPass.value='pass123'; }
+
+    btnLogin.onclick = ()=>{
+      const u = loginUser.value.trim();
+      const p = loginPass.value.trim();
+      if(!u || !p){ alert('enter username and password'); return; }
+      const user = demoUsers[u];
+      if(!user || user.password !== p){ alert('invalid credentials for demo users: student1/student2'); return; }
+
+      // set session
+      state.loggedIn = true; state.username = u; state.sessionId = 'S-'+Math.random().toString(36).slice(2,10).toUpperCase();
+
+      // load saved state if exists
+      const stored = loadFromStorage(u);
+      if(stored){
+        state.examStarted = stored.examStarted;
+        state.examStartTs = stored.examStartTs;
+        state.duration = stored.duration || EXAM_DURATION_SECONDS;
+        state.answers = stored.answers || {};
+        state.currentIndex = stored.currentIndex || 0;
+        state.submitted = stored.submitted || false;
+        // compute remaining
+        if(state.examStarted && !state.submitted){
+          const elapsed = Math.floor((Date.now() - state.examStartTs)/1000);
+          state.remaining = Math.max(0, state.duration - elapsed);
+          if(state.remaining<=0) autoSubmit();
+        }
+      }
+
+      // populate profile fields
+      profileName.value = demoUsers[u].fullName;
+      profileEmail.value = demoUsers[u].email;
+
+      showView();
+    }
+
+    btnLogout.onclick = ()=>{
+      if(confirm('Logout and end session?')){
+        // do not clear saved exam progress on logout — only closing session does that
+        state = {loggedIn:false, username:null, sessionId:null};
+        showView();
+      }
+    }
+
+    btnCloseSession.onclick = ()=>{
+      if(!state.username) return;
+      if(confirm('Close session and clear all local progress for this user?')){
+        localStorage.removeItem('exam_state_' + state.username);
+        state = {loggedIn:false, username:null, sessionId:null};
+        alert('Session closed and progress cleared locally.');
+        showView();
+      }
+    }
+
+    // Exam flow
+    startExam.onclick = ()=>{
+      if(!state.loggedIn) return alert('login first');
+      if(state.examStarted && !state.submitted) return alert('Exam already in progress');
+      // initialize exam
+      state.examStarted = true;
+      state.examStartTs = Date.now();
+      state.duration = EXAM_DURATION_SECONDS;
+      state.remaining = state.duration;
+      state.answers = {}; state.currentIndex = 0; state.submitted=false;
+      saveToStorage();
+      examArea.classList.remove('hidden');
+      profileArea.classList.add('hidden');
+      resultArea.classList.add('hidden');
+      renderQuestion(); renderNavButtons(); startTimer();
+      examStatus.textContent = 'In progress';
+      examDurationEl.textContent = formatTime(state.duration);
+    }
+
+    btnPrev.onclick = ()=>{
+      state.currentIndex = Math.max(0, state.currentIndex-1); renderQuestion();
+    }
+    btnNext.onclick = ()=>{
+      state.currentIndex = Math.min(state.questions.length-1, state.currentIndex+1); renderQuestion();
+    }
+
+    btnSubmit.onclick = ()=>{
+      if(!confirm('Submit exam now? You will not be able to change answers.')) return;
+      submitExam(false);
+    }
+
+    function submitExam(isAuto){
+      state.submitted = true;
+      state.examStarted = false;
+      clearInterval(state.timerInterval);
+      // scoring (simple)
+      let correct = 0; let answered=0;
+      state.questions.forEach(q=>{
+        if(state.answers[q.id] !== undefined){ answered++; if(state.answers[q.id] === q.answer) correct++; }
+      })
+      const score = Math.round((correct/state.questions.length)*100);
+      scoreSummary.innerHTML = `Score: <strong>${score}%</strong> (${correct}/${state.questions.length}) <div class="small">Answered: ${answered}</div>`;
+      resultArea.classList.remove('hidden');
+      examArea.classList.add('hidden');
+      examStatus.textContent = isAuto ? 'Auto-submitted (time up)' : 'Submitted';
+
+      // save final submitted state
+      saveToStorage();
+    }
+
+    btnRetake.onclick = ()=>{
+      if(!confirm('Retake will reset your stored answers. Continue?')) return;
+      localStorage.removeItem('exam_state_' + state.username);
+      state.examStarted=false; state.submitted=false; state.answers={}; state.currentIndex=0;
+      showView();
+    }
+
+    // Profile handling
+    btnProfile.onclick = ()=>{
+      profileArea.classList.toggle('hidden');
+      examArea.classList.add('hidden');
+      resultArea.classList.add('hidden');
+    }
+    btnCancelProfile.onclick = ()=>{ profileArea.classList.add('hidden'); }
+
+    btnSaveProfile.onclick = ()=>{
+      const n = profileName.value.trim(); const e = profileEmail.value.trim(); const pass = profileNewPass.value.trim();
+      if(n) demoUsers[state.username].fullName = n;
+      if(e) demoUsers[state.username].email = e;
+      if(pass){ demoUsers[state.username].password = pass; alert('Password changed locally for demo account (not secure)'); }
+      alert('Profile saved (local demo only)');
+      profileNewPass.value='';
+      profileArea.classList.add('hidden');
+    }
+
+    // initialize UI
+    showView();
+
+    // For safety: warn user before closing window if exam in progress
+    window.addEventListener('beforeunload', (e)=>{
+      if(state.examStarted && !state.submitted){
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    });
+
+  </script>
+</body>
+</html>
