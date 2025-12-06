@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Online Reservation System</title>
+
+    <style>
+        body {
+            font-family: Arial;
+            background: #eef2f3;
+        }
+        .container {
+            width: 350px;
+            margin: auto;
+            margin-top: 40px;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 0 12px gray;
+            display: none;
+        }
+        h2, h3 {
+            text-align: center;
+        }
+        input, select, button {
+            width: 100%;
+            margin: 6px 0;
+            padding: 8px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0056c7;
+        }
+        a {
+            display: block;
+            text-align: center;
+            margin-top: 12px;
+            cursor: pointer;
+            color: blue;
+        }
+        #msg, #ticketInfo {
+            color: red;
+            text-align: center;
+            margin-top: 10px;
+        }
+    </style>
+
+</head>
+
+<body>
+
+<!-- LOGIN PAGE -->
+<div class="container" id="loginPage" style="display: block;">
+    <h2>Online Reservation System</h2>
+    <h3>Login</h3>
+
+    <label>Login ID</label>
+    <input type="text" id="loginId">
+
+    <label>Password</label>
+    <input type="password" id="password">
+
+    <button onclick="loginUser()">Login</button>
+    <p id="msg"></p>
+</div>
+
+
+
+<!-- RESERVATION PAGE -->
+<div class="container" id="reservationPage">
+    <h2>Reservation Form</h2>
+
+    <label>Passenger Name</label>
+    <input type="text" id="pname">
+
+    <label>Train Number</label>
+    <input type="number" id="trainNo" onkeyup="autoFillTrain()">
+
+    <label>Train Name</label>
+    <input type="text" id="trainName" readonly>
+
+    <label>Class Type</label>
+    <select id="classType">
+        <option>Sleeper</option>
+        <option>AC</option>
+        <option>General</option>
+    </select>
+
+    <label>Date of Journey</label>
+    <input type="date" id="date">
+
+    <label>From</label>
+    <input type="text" id="from">
+
+    <label>Destination</label>
+    <input type="text" id="to">
+
+    <button onclick="submitReservation()">Insert</button>
+
+    <p id="msg2"></p>
+
+    <a onclick="openCancel()">Go to Cancellation Form</a>
+</div>
+
+
+
+<!-- CANCELLATION PAGE -->
+<div class="container" id="cancelPage">
+    <h2>Ticket Cancellation</h2>
+
+    <label>Enter PNR Number</label>
+    <input type="text" id="pnr">
+
+    <button onclick="cancelTicket()">Search</button>
+
+    <p id="ticketInfo"></p>
+</div>
+
+
+
+<script>
+
+// Dummy train database
+const trainData = {
+    12345: "Chennai Express",
+    54321: "Shatabdi Express",
+    67890: "Rajdhani Express",
+    98765: "Garib Rath"
+};
+
+// Switch Pages
+function showPage(pageId) {
+    document.getElementById("loginPage").style.display = "none";
+    document.getElementById("reservationPage").style.display = "none";
+    document.getElementById("cancelPage").style.display = "none";
+
+    document.getElementById(pageId).style.display = "block";
+}
+
+
+
+// LOGIN FUNCTION
+function loginUser() {
+    let id = document.getElementById("loginId").value;
+    let pw = document.getElementById("password").value;
+
+    if (id === "admin" && pw === "1234") {
+        showPage("reservationPage");
+    } else {
+        document.getElementById("msg").innerHTML = "Invalid Login!";
+    }
+}
+
+
+
+// AUTO FILL TRAIN NAME
+function autoFillTrain() {
+    let no = document.getElementById("trainNo").value;
+    document.getElementById("trainName").value = trainData[no] || "";
+}
+
+
+
+// RESERVATION SUBMIT
+function submitReservation() {
+
+    if (
+        document.getElementById("pname").value === "" ||
+        document.getElementById("trainNo").value === "" ||
+        document.getElementById("date").value === "" ||
+        document.getElementById("from").value === "" ||
+        document.getElementById("to").value === ""
+    ) {
+        document.getElementById("msg2").innerHTML = "Please fill all fields!";
+        return;
+    }
+
+    alert("Reservation Successful!\nYour PNR: 9876543210");
+
+    document.getElementById("msg2").innerHTML = "Reservation Completed!";
+}
+
+
+
+// OPEN CANCEL PAGE
+function openCancel() {
+    showPage("cancelPage");
+}
+
+
+
+// CANCEL TICKET
+function cancelTicket() {
+    let pnr = document.getElementById("pnr").value;
+
+    if (pnr === "9876543210") {
+        document.getElementById("ticketInfo").innerHTML =
+            "PNR Found!<br>Passenger: Sample User<br>Train: Chennai Express<br><br><button onclick='confirmCancel()'>OK</button>";
+    } else {
+        document.getElementById("ticketInfo").innerHTML = "PNR Not Found!";
+    }
+}
+
+
+
+// CONFIRM CANCEL
+function confirmCancel() {
+    alert("Ticket Cancelled Successfully!");
+    document.getElementById("ticketInfo").innerHTML = "";
+}
+
+</script>
+
+</body>
+</html>
