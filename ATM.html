@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>ATM Interface Project</title>
+<style>
+    body {
+        font-family: Arial;
+        background: #eef2f3;
+    }
+    .container {
+        width: 400px;
+        margin: 40px auto;
+        background: white;
+        padding: 25px;
+        border-radius: 10px;
+        box-shadow: 0 0 10px #aaa;
+    }
+    h2 {
+        text-align: center;
+    }
+    input, button {
+        width: 100%;
+        padding: 10px;
+        margin-top: 10px;
+        border-radius: 5px;
+        border: 1px solid #aaa;
+        font-size: 16px;
+    }
+    button {
+        background: #007bff;
+        color: white;
+        cursor: pointer;
+    }
+    button:hover {
+        background: #0056b3;
+    }
+    .hide {
+        display: none;
+    }
+</style>
+</head>
+
+<body>
+
+<div class="container" id="loginBox">
+    <h2>ATM Login</h2>
+    <input type="text" id="userid" placeholder="Enter User ID">
+    <input type="password" id="pin" placeholder="Enter PIN">
+    <button onclick="login()">Login</button>
+</div>
+
+<div class="container hide" id="menuBox">
+    <h2>ATM Menu</h2>
+    <button onclick="showWithdraw()">Withdraw</button>
+    <button onclick="showDeposit()">Deposit</button>
+    <button onclick="showTransfer()">Transfer</button>
+    <button onclick="showHistory()">Transaction History</button>
+    <button onclick="logout()">Quit</button>
+</div>
+
+<div class="container hide" id="actionBox">
+    <h2 id="actionTitle"></h2>
+    <input type="number" id="amount" placeholder="Enter amount">
+    <input type="text" id="receiver" class="hide" placeholder="Receiver ID">
+    <button onclick="performAction()">Submit</button>
+    <button onclick="goBack()">Back</button>
+</div>
+
+<div class="container hide" id="historyBox">
+    <h2>Transaction History</h2>
+    <p id="historyText"></p>
+    <button onclick="goBack()">Back</button>
+</div>
+
+<script>
+let balance = 10000;
+let history = [];
+let currentAction = "";
+
+function login() {
+    let uid = document.getElementById("userid").value;
+    let pin = document.getElementById("pin").value;
+
+    if (uid === "" || pin === "") {
+        alert("Enter User ID and PIN!");
+        return;
+    }
+    document.getElementById("loginBox").classList.add("hide");
+    document.getElementById("menuBox").classList.remove("hide");
+}
+
+function showWithdraw() {
+    currentAction = "withdraw";
+    document.getElementById("actionTitle").innerText = "Withdraw Amount";
+    document.getElementById("receiver").classList.add("hide");
+    showActionBox();
+}
+
+function showDeposit() {
+    currentAction = "deposit";
+    document.getElementById("actionTitle").innerText = "Deposit Amount";
+    document.getElementById("receiver").classList.add("hide");
+    showActionBox();
+}
+
+function showTransfer() {
+    currentAction = "transfer";
+    document.getElementById("actionTitle").innerText = "Transfer Amount";
+    document.getElementById("receiver").classList.remove("hide");
+    showActionBox();
+}
+
+function showHistory() {
+    document.getElementById("menuBox").classList.add("hide");
+    document.getElementById("historyBox").classList.remove("hide");
+
+    if (history.length === 0) {
+        document.getElementById("historyText").innerText = "No transactions yet!";
+    } else {
+        document.getElementById("historyText").innerHTML = history.join("<br>");
+    }
+}
+
+function performAction() {
+    let amount = Number(document.getElementById("amount").value);
+
+    if (amount <= 0 || isNaN(amount)) {
+        alert("Enter valid amount!");
+        return;
+    }
+
+    if (currentAction === "withdraw") {
+        if (amount > balance) {
+            alert("Insufficient balance!");
+            return;
+        }
+        balance -= amount;
+        history.push("Withdrawn: ₹" + amount);
+
+    } else if (currentAction === "deposit") {
+        balance += amount;
+        history.push("Deposited: ₹" + amount);
+
+    } else if (currentAction === "transfer") {
+        let receiver = document.getElementById("receiver").value;
+        if (receiver === "") {
+            alert("Enter Receiver ID");
+            return;
+        }
+        if (amount > balance) {
+            alert("Insufficient balance!");
+            return;
+        }
+        balance -= amount;
+        history.push("Transferred ₹" + amount + " to " + receiver);
+    }
+
+    alert("Transaction Successful!");
+    goBack();
+}
+
+function showActionBox() {
+    document.getElementById("menuBox").classList.add("hide");
+    document.getElementById("actionBox").classList.remove("hide");
+}
+
+function goBack() {
+    document.getElementById("amount").value = "";
+    document.getElementById("receiver").value = "";
+    document.getElementById("actionBox").classList.add("hide");
+    document.getElementById("historyBox").classList.add("hide");
+    document.getElementById("menuBox").classList.remove("hide");
+}
+
+function logout() {
+    location.reload();
+}
+</script>
+
+</body>
+</html>
