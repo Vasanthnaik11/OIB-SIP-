@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Library Management System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background-color: #f4f4f4;
+        }
+        header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        nav {
+            display: flex;
+            justify-content: center;
+            background-color: #34495e;
+        }
+        nav button {
+            background-color: #34495e;
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        nav button:hover {
+            background-color: #1abc9c;
+        }
+        .container {
+            max-width: 900px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display:block;
+            margin-bottom: 5px;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        table, th, td {
+            border: 1px solid #ccc;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+        .btn {
+            padding: 10px 15px;
+            background-color: #1abc9c;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .btn:hover {
+            background-color: #16a085;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Digital Library Management System</h1>
+    </header>
+
+    <nav>
+        <button onclick="showSection('login')">Login</button>
+        <button onclick="showSection('admin')">Admin Panel</button>
+        <button onclick="showSection('user')">User Panel</button>
+    </nav>
+
+    <div class="container">
+        <!-- Login Section -->
+        <div id="login">
+            <h2>Login</h2>
+            <div class="form-group">
+                <label for="username">Username:</label>
+                <input type="text" id="username" placeholder="Enter username">
+            </div>
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" id="password" placeholder="Enter password">
+            </div>
+            <button class="btn" onclick="login()">Login</button>
+        </div>
+
+        <!-- Admin Section -->
+        <div id="admin" class="hidden">
+            <h2>Admin Panel</h2>
+            <div class="form-group">
+                <label for="bookName">Book Name:</label>
+                <input type="text" id="bookName" placeholder="Enter book name">
+            </div>
+            <div class="form-group">
+                <label for="authorName">Author Name:</label>
+                <input type="text" id="authorName" placeholder="Enter author name">
+            </div>
+            <button class="btn" onclick="addBook()">Add Book</button>
+
+            <h3>Books List</h3>
+            <table id="bookTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Book Name</th>
+                        <th>Author</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Books will appear here -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- User Section -->
+        <div id="user" class="hidden">
+            <h2>User Panel</h2>
+            <div class="form-group">
+                <label for="searchBook">Search Book:</label>
+                <input type="text" id="searchBook" placeholder="Enter book name">
+            </div>
+            <button class="btn" onclick="searchBook()">Search</button>
+
+            <h3>Available Books</h3>
+            <table id="userBookTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Book Name</th>
+                        <th>Author</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Books will appear here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        let books = [];
+        let bookId = 1;
+
+        function showSection(section) {
+            document.getElementById('login').classList.add('hidden');
+            document.getElementById('admin').classList.add('hidden');
+            document.getElementById('user').classList.add('hidden');
+            document.getElementById(section).classList.remove('hidden');
+        }
+
+        function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            if(username === "admin" && password === "admin123") {
+                alert("Admin Login Successful");
+                showSection('admin');
+            } else if(username === "user" && password === "user123") {
+                alert("User Login Successful");
+                showSection('user');
+            } else {
+                alert("Invalid credentials!");
+            }
+        }
+
+        function addBook() {
+            const name = document.getElementById('bookName').value;
+            const author = document.getElementById('authorName').value;
+
+            if(name === "" || author === "") {
+                alert("Please enter book details");
+                return;
+            }
+
+            books.push({id: bookId, name, author});
+            bookId++;
+            displayBooks();
+            alert("Book added successfully!");
+        }
+
+        function displayBooks() {
+            const table = document.getElementById('bookTable').getElementsByTagName('tbody')[0];
+            const userTable = document.getElementById('userBookTable').getElementsByTagName('tbody')[0];
+
+            table.innerHTML = "";
+            userTable.innerHTML = "";
+
+            books.forEach(book => {
+                let row = table.insertRow();
+                row.insertCell(0).innerText = book.id;
+                row.insertCell(1).innerText = book.name;
+                row.insertCell(2).innerText = book.author;
+                row.insertCell(3).innerHTML = `<button onclick="deleteBook(${book.id})">Delete</button>`;
+
+                let userRow = userTable.insertRow();
+                userRow.insertCell(0).innerText = book.id;
+                userRow.insertCell(1).innerText = book.name;
+                userRow.insertCell(2).innerText = book.author;
+                userRow.insertCell(3).innerHTML = `<button onclick="issueBook(${book.id})">Issue</button>`;
+            });
+        }
+
+        function deleteBook(id) {
+            books = books.filter(book => book.id !== id);
+            displayBooks();
+        }
+
+        function searchBook() {
+            const query = document.getElementById('searchBook').value.toLowerCase();
+            const userTable = document.getElementById('userBookTable').getElementsByTagName('tbody')[0];
+
+            userTable.innerHTML = "";
+
+            books.filter(book => book.name.toLowerCase().includes(query)).forEach(book => {
+                let row = userTable.insertRow();
+                row.insertCell(0).innerText = book.id;
+                row.insertCell(1).innerText = book.name;
+                row.insertCell(2).innerText = book.author;
+                row.insertCell(3).innerHTML = `<button onclick="issueBook(${book.id})">Issue</button>`;
+            });
+        }
+
+        function issueBook(id) {
+            alert(`Book ID ${id} issued successfully!`);
+        }
+    </script>
+</body>
+</html>
